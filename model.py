@@ -33,6 +33,3 @@ class Discriminator(nn.Module):
         x = F.leaky_relu(self.fc3(x), 0.2)
         return torch.sigmoid(self.fc4(x))
     
-    def Macron (self):
-        print("I am a macron")
-        return 0
