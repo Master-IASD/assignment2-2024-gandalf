@@ -1,0 +1,8 @@
+# Ignoring articles
+*.pdf
+
+# Files of images
+data/
+samples/
+__pycache__
+

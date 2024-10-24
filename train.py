@@ -5,10 +5,13 @@ import argparse
 from torchvision import datasets, transforms
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
 
 from model import Generator, Discriminator
 from utils import D_train, G_train, save_models
+
+from model_f_GAN import fGAN,jensen_shannon, Kullback_Leibler,Pearson
 
 
 
@@ -48,8 +51,8 @@ if __name__ == '__main__':
 
     print('Model Loading...')
     mnist_dim = 784
-    G = torch.nn.DataParallel(Generator(g_output_dim = mnist_dim)).cuda()
-    D = torch.nn.DataParallel(Discriminator(mnist_dim)).cuda()
+    G = torch.nn.DataParallel(Generator(g_output_dim = mnist_dim))#.cuda()
+    D = torch.nn.DataParallel(Discriminator(mnist_dim))#.cuda()
 
 
     # model = DataParallel(model).cuda()
@@ -65,18 +68,40 @@ if __name__ == '__main__':
     G_optimizer = optim.Adam(G.parameters(), lr = args.lr)
     D_optimizer = optim.Adam(D.parameters(), lr = args.lr)
 
+    #Test defining f-gan
+    model = fGAN(generator = G,
+                 variational_function = D,
+                 g_optimizer = G_optimizer,
+                 v_optimizer = D_optimizer,
+                 divergence = Kullback_Leibler)
+    
     print('Start Training :')
     
     n_epoch = args.epochs
-    for epoch in trange(1, n_epoch+1, leave=True):           
+    dloss_final = []
+    gloss_final = []
+    for epoch in trange(1, n_epoch+1, leave=True):
+        dloss = []
+        gloss = []          
         for batch_idx, (x, _) in enumerate(train_loader):
             x = x.view(-1, mnist_dim)
-            D_train(x, G, D, D_optimizer, criterion)
-            G_train(x, G, D, G_optimizer, criterion)
+            #D_train(x, G, D, D_optimizer, criterion)
+            #G_train(x, G, D, G_optimizer, criterion)
 
+            dloss_tmp,gloss_tmp = model.train_step(real_data=x,batch_size=x.shape[0])
+            dloss.append(dloss_tmp)
+            gloss.append(gloss_tmp)
         if epoch % 10 == 0:
-            save_models(G, D, 'checkpoints')
-                
+            save_models(model.generator, model.variational_function, 'checkpoints')
+        dloss_final.append(np.mean(dloss))
+        gloss_final.append(np.mean(gloss))
+
     print('Training done')
+    import pylab as plt
+    plt.figure()
+    plt.plot(dloss_final,'.',label='discriminator')
+    plt.plot(gloss_final,'.',label='generator')
+    plt.legend()
+    plt.show()
 
         
