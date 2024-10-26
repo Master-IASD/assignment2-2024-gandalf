@@ -11,7 +11,8 @@ import numpy as np
 from model import Generator, Discriminator
 from utils import D_train, G_train, save_models
 
-from model_f_GAN import fGAN,jensen_shannon, Kullback_Leibler,Pearson
+from model_f_GAN import fGAN
+from f_divergences import *
 
 
 
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Normalizing Flow.')
     parser.add_argument("--epochs", type=int, default=100,
                         help="Number of epochs for training.")
-    parser.add_argument("--lr", type=float, default=0.0002,
+    parser.add_argument("--lr", type=float, default=0.00002,
                       help="The learning rate to use for training.")
     parser.add_argument("--batch_size", type=int, default=64, 
                         help="Size of mini-batches for SGD")
@@ -51,9 +52,11 @@ if __name__ == '__main__':
 
     print('Model Loading...')
     mnist_dim = 784
-    G = torch.nn.DataParallel(Generator(g_output_dim = mnist_dim))#.cuda()
-    D = torch.nn.DataParallel(Discriminator(mnist_dim))#.cuda()
+    G = torch.nn.DataParallel(Generator(g_output_dim = mnist_dim)).cuda()
+    D = torch.nn.DataParallel(Discriminator(mnist_dim)).cuda()
 
+    #G = Generator(g_output_dim = mnist_dim)
+    #D = Discriminator(mnist_dim)
 
     # model = DataParallel(model).cuda()
     print('Model loaded.')
@@ -66,7 +69,7 @@ if __name__ == '__main__':
 
     # define optimizers
     G_optimizer = optim.Adam(G.parameters(), lr = args.lr)
-    D_optimizer = optim.Adam(D.parameters(), lr = args.lr)
+    D_optimizer = optim.Adam(D.parameters(), lr = args.lr/5)
 
     #Test defining f-gan
     model = fGAN(generator = G,
@@ -93,15 +96,18 @@ if __name__ == '__main__':
             gloss.append(gloss_tmp)
         if epoch % 10 == 0:
             save_models(model.generator, model.variational_function, 'checkpoints')
+
+        #print(f'dloss = {np.mean(dloss)}')
+        #print(f'gloss = {np.mean(gloss)}')
         dloss_final.append(np.mean(dloss))
         gloss_final.append(np.mean(gloss))
 
     print('Training done')
-    import pylab as plt
-    plt.figure()
-    plt.plot(dloss_final,'.',label='discriminator')
-    plt.plot(gloss_final,'.',label='generator')
-    plt.legend()
-    plt.show()
+    #import pylab as plt
+    #fig,ax = plt.subplots(1,2,figsize=(10,5))
+    #ax[0].plot(np.sign(dloss_final)*np.log(np.abs(dloss_final)),marker='.',label='discriminator')
+    #ax[1].plot(np.sign(gloss_final)*np.log(np.abs(gloss_final)),marker='.',label='generator')
+    #ax[0].legend()
+    #plt.show()
 
         

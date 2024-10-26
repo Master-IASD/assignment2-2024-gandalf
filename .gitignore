@@ -6,3 +6,4 @@ data/
 samples/
 __pycache__
 
+select_images.py
