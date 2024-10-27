@@ -11,7 +11,10 @@ class fGAN:
         self.div = divergence()  # f-divergence used (e.g jensen-shannon, etc)
 
 
-    def discriminator_loss(self,real_data,fake_data):
+    def discriminator_loss(self,real_data, batch_size):
+        z = torch.randn(batch_size, 100) * 0.5
+        fake_data = self.generator(z).detach()
+
         real_output = self.div.f(self.variational_function(real_data)) + torch.randn_like(real_data) * 0.05
         fake_output = self.div.f(self.variational_function(fake_data)) + torch.randn_like(fake_data) * 0.05
 
@@ -20,30 +23,30 @@ class fGAN:
 
         return loss_fake - loss_real
     
-    def generator_loss(self,fake_data):
+    def generator_loss(self,batch_size):
+        z = torch.randn(batch_size, 100) * 0.5
+        fake_data = self.generator(z)
         fake_output = self.div.f(self.variational_function(fake_data))
         return torch.mean(self.div.f_star(fake_output))
 
     def train_step(self, real_data, batch_size):
-        noise = torch.randn(batch_size, 100)*0.5  # Random noise for the generator
-        generated_data = self.generator(noise)
+        #noise = torch.randn(batch_size, 100)  # Random noise for the generator
+        #generated_data = self.generator(noise) + torch.randn_like(noise) * 0.05
 
-        # Train the discriminator two times before updating generator
+        # Generator training
+        self.g_optimizer.zero_grad()
+        g_loss = self.generator_loss(batch_size)
+        g_loss.backward()
+        self.g_optimizer.step()
          
-        self.v_optimizer.zero_grad()
-        v_loss = self.discriminator_loss(real_data,generated_data.detach())
-        (-v_loss).backward() #Gradient ascent
-        self.v_optimizer.step()
-
-        # Generator update
-        
+        # Discriminator training
+        for _ in range(1) : 
+            self.v_optimizer.zero_grad()
+            v_loss = self.discriminator_loss(real_data,batch_size)
+            (-v_loss).backward() #Gradient ascent
+            self.v_optimizer.step()
         
         #fake_score_updated = self.variational_function(generated_data)
         
-        
-        self.g_optimizer.zero_grad()
-        g_loss = self.generator_loss(generated_data)
-        g_loss.backward()
-        self.g_optimizer.step()
 
         return v_loss.item(), g_loss.item()
