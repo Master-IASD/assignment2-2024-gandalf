@@ -6,4 +6,6 @@ data/
 samples/
 __pycache__
 
+#loss values
+losses.csv
 select_images.py

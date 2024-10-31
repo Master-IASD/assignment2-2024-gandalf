@@ -13,8 +13,7 @@ from utils import D_train, G_train, save_models
 from model_f_GAN import fGAN
 from f_divergences import *
 
-
-
+import csv
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Normalizing Flow.')
@@ -23,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument("--lr", type=float, default=0.0002,
                       help="The learning rate to use for training.")
     parser.add_argument("--batch_size", type=int, default=64, 
-                        help="Size of mini-batches for SGD")
+                        help="Size of mini-batches for ADAM")
 
     args = parser.parse_args()
 
@@ -54,59 +53,49 @@ if __name__ == '__main__':
     G = torch.nn.DataParallel(Generator(g_output_dim = mnist_dim))#.cuda()
     D = torch.nn.DataParallel(Discriminator(d_input_dim = mnist_dim))#.cuda()
 
-    #G = Generator(g_output_dim = mnist_dim)
-    #D = Discriminator(mnist_dim)
-
     # model = DataParallel(model).cuda()
     print('Model loaded.')
-    # Optimizer 
 
+    # Define optimizers
+    G_optimizer = optim.Adam(G.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=1e-6)
+    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=5e-3)
 
-
-    # define loss
-    criterion = nn.BCELoss() 
-
-    # define optimizers
-    G_optimizer = optim.Adam(G.parameters(), lr = args.lr/2, betas = (0.5,0.999))
-    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999))
-
-    #Test defining f-gan
     model = fGAN(generator = G,
-                 variational_function = D,
+                 discriminator = D,
                  g_optimizer = G_optimizer,
-                 v_optimizer = D_optimizer,
+                 d_optimizer = D_optimizer,
                  divergence = Kullback_Leibler)
     
     print('Start Training :')
     
     n_epoch = args.epochs
-    dloss_final = []
-    gloss_final = []
-    for epoch in trange(1, n_epoch+1, leave=True):
-        dloss = []
-        gloss = []          
-        for batch_idx, (x, _) in enumerate(train_loader):
-            x = x.view(-1, mnist_dim)
-            #dloss_tmp = D_train(x, G, D, D_optimizer, criterion)
-            #gloss_tmp = G_train(x, G, D, G_optimizer, criterion)
 
-            dloss_tmp,gloss_tmp = model.train_step(real_data=x,batch_size=x.shape[0])
-            dloss.append(dloss_tmp)
-            gloss.append(gloss_tmp)
-        if epoch % 10 == 0:
-            save_models(model.generator, model.variational_function, 'checkpoints')
+    with open('losses.csv',mode='w') as file:
+        writer = csv.writer(file,delimiter = ',',lineterminator='\n')
+        for epoch in trange(1, n_epoch+1, leave=True):
+            dloss = [] # loss values for the discriminator per batch
+            gloss = [] # loss values for the generator per batch
+            acc = []      
+            for batch_idx, (x, _) in enumerate(train_loader):
+                x = x.view(-1, mnist_dim)
+                dloss_tmp,gloss_tmp,acc_tmp = model.train_step(real_data=x,batch_size=x.shape[0])
+                dloss.append(dloss_tmp)
+                gloss.append(gloss_tmp)
+                acc.append(acc_tmp)
 
-        #print(f'dloss = {np.mean(dloss)}')
-        #print(f'gloss = {np.mean(gloss)}')
-        dloss_final.append(np.mean(dloss))
-        gloss_final.append(np.mean(gloss))
+            current_dloss = np.mean(dloss)
+            current_gloss = np.mean(gloss)
+            current_acc = np.mean(acc)
+            
+            if epoch % 2 == 0:
+                save_models(model.generator, model.discriminator, 'checkpoints')
+
+            print(f'Discriminator loss : {'{:.3f}'.format(current_dloss)}')
+            print(f'Generator loss : {'{:.3f}'.format(current_gloss)}')
+            print(f'Accuracy of the discriminator : {'{:.2f}'.format(current_acc)}')
+            writer.writerow([current_dloss,current_gloss,current_acc])
 
     print('Training done')
-    import pylab as plt
-    fig,ax = plt.subplots(1,2,figsize=(10,5))
-    ax[0].plot(np.sign(dloss_final)*np.log(np.abs(dloss_final)),marker='.',label='discriminator')
-    ax[1].plot(np.sign(gloss_final)*np.log(np.abs(gloss_final)),marker='.',label='generator')
-    ax[0].legend()
-    plt.show()
+
 
         
