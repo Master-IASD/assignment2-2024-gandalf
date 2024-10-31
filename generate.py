@@ -12,23 +12,14 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", type=int, default=2048,
                       help="The batch size to use for training.")
     args = parser.parse_args()
-
-
-
-
     print('Model Loading...')
     # Model Pipeline
     mnist_dim = 784
-
     model = Generator(g_output_dim = mnist_dim).cuda()
-    model = load_model(model, 'checkpoints')
+    model = load_model(model,name='G.pth',folder= 'checkpoints')
     model = torch.nn.DataParallel(model).cuda()
     model.eval()
-
     print('Model loaded.')
-
-
-
     print('Start Generating')
     os.makedirs('samples', exist_ok=True)
 
