@@ -12,6 +12,7 @@ from utils import D_train, G_train, save_models
 
 from model_f_GAN import fGAN
 from f_divergences import *
+from utils import load_model
 
 import csv
 
@@ -50,21 +51,26 @@ if __name__ == '__main__':
 
     print('Model Loading...')
     mnist_dim = 784
-    G = torch.nn.DataParallel(Generator(g_output_dim = mnist_dim))#.cuda()
-    D = torch.nn.DataParallel(Discriminator(d_input_dim = mnist_dim))#.cuda()
+    G = Generator(g_output_dim = mnist_dim).cuda()
+    #G = load_model(G, folder = 'checkpoints',name='GJS.pth')
+    G = torch.nn.DataParallel(G).cuda()
+    D = Discriminator(d_input_dim = mnist_dim).cuda()
+    #D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
+    D = torch.nn.DataParallel(D).cuda()
 
     # model = DataParallel(model).cuda()
     print('Model loaded.')
 
     # Define optimizers
-    G_optimizer = optim.Adam(G.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=1e-6)
-    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=5e-3)
+    G_optimizer = optim.Adam(G.parameters(), lr = args.lr, betas = (0.5,0.999))
+    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=1e-3)
+
 
     model = fGAN(generator = G,
                  discriminator = D,
                  g_optimizer = G_optimizer,
                  d_optimizer = D_optimizer,
-                 divergence = Kullback_Leibler)
+                 divergence = reverse_KL)
     
     print('Start Training :')
     
@@ -96,6 +102,3 @@ if __name__ == '__main__':
             writer.writerow([current_dloss,current_gloss,current_acc])
 
     print('Training done')
-
-
-        
