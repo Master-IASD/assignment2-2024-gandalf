@@ -24,6 +24,8 @@ if __name__ == '__main__':
                       help="The learning rate to use for training.")
     parser.add_argument("--batch_size", type=int, default=64, 
                         help="Size of mini-batches for ADAM")
+    parser.add_argument("--wd", type=float, default=1e-4, 
+                        help="Value for weight decay of the discriminator")                
 
     args = parser.parse_args()
 
@@ -51,26 +53,27 @@ if __name__ == '__main__':
 
     print('Model Loading...')
     mnist_dim = 784
-    G = Generator(g_output_dim = mnist_dim).cuda()
-    #G = load_model(G, folder = 'checkpoints',name='GJS.pth')
-    G = torch.nn.DataParallel(G).cuda()
-    D = Discriminator(d_input_dim = mnist_dim).cuda()
-    #D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
-    D = torch.nn.DataParallel(D).cuda()
+    G = Generator(g_output_dim = mnist_dim)#.cuda()
+    G = load_model(G, folder = 'checkpoints',name='GJS.pth')
+    G = torch.nn.DataParallel(G)#.cuda()
+    D = Discriminator(d_input_dim = mnist_dim)#.cuda()
+    D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
+    D = torch.nn.DataParallel(D)#.cuda()
 
     # model = DataParallel(model).cuda()
     print('Model loaded.')
 
     # Define optimizers
     G_optimizer = optim.Adam(G.parameters(), lr = args.lr, betas = (0.5,0.999))
-    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=1e-3)
+    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=args.wd)
+    print(f'Weight decay = {args.wd}')
 
 
     model = fGAN(generator = G,
                  discriminator = D,
                  g_optimizer = G_optimizer,
                  d_optimizer = D_optimizer,
-                 divergence = reverse_KL)
+                 divergence = Kullback_Leibler)
     
     print('Start Training :')
     
@@ -96,8 +99,8 @@ if __name__ == '__main__':
             if epoch % 2 == 0:
                 save_models(model.generator, model.discriminator, 'checkpoints')
 
-            print(f'Discriminator loss : {'{:.3f}'.format(current_dloss)}')
-            print(f'Generator loss : {'{:.3f}'.format(current_gloss)}')
+            print(f'Discriminator loss : {'{:.1e}'.format(current_dloss)}')
+            print(f'Generator loss : {'{:.1e}'.format(current_gloss)}')
             print(f'Accuracy of the discriminator : {'{:.2f}'.format(current_acc)}')
             writer.writerow([current_dloss,current_gloss,current_acc])
 
