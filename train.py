@@ -53,10 +53,10 @@ if __name__ == '__main__':
     mnist_dim = 784
     G = Generator(g_output_dim = mnist_dim).cuda()
     #G = load_model(G, folder = 'checkpoints',name='GJS.pth')
-    G = torch.nn.DataParallel(G).cuda()
+    G = torch.nn.DataParallel(G) #.cuda()
     D = Discriminator(d_input_dim = mnist_dim).cuda()
     #D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
-    D = torch.nn.DataParallel(D).cuda()
+    D = torch.nn.DataParallel(D) .cuda()
 
     # model = DataParallel(model).cuda()
     print('Model loaded.')
@@ -96,9 +96,7 @@ if __name__ == '__main__':
             if epoch % 2 == 0:
                 save_models(model.generator, model.discriminator, 'checkpoints')
 
-            print(f'Discriminator loss : {'{:.3f}'.format(current_dloss)}')
-            print(f'Generator loss : {'{:.3f}'.format(current_gloss)}')
-            print(f'Accuracy of the discriminator : {'{:.2f}'.format(current_acc)}')
+            print(f'Discriminator loss : {current_dloss}, Generator loss : {current_gloss}, Discriminator accuracy : {current_acc}')
             writer.writerow([current_dloss,current_gloss,current_acc])
 
     print('Training done')

@@ -20,6 +20,15 @@ class fGAN:
         train_step : Compute the backward path and one optimizer step for generator and discriminator
 
     """
+    
+    def initialize_weights(self, model):
+        for m in model.modules():
+            if isinstance(m, (torch.nn.Conv2d, torch.nn.Linear)):
+                torch.nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    torch.nn.init.zeros_(m.bias)
+                
+                
     def __init__(self, generator, discriminator, g_optimizer, d_optimizer, divergence):
         """    
         Construct the f-GAN model with predefined generator and discriminator architectures.
@@ -35,6 +44,9 @@ class fGAN:
 
         self.generator = generator
         self.discriminator = discriminator
+        # Apply this to both generator and discriminator after their instantiation.
+        self.initialize_weights(self.generator)
+        self.initialize_weights(self.discriminator)
         self.g_optimizer = g_optimizer
         self.v_optimizer = d_optimizer
         self.div = divergence() 
@@ -147,3 +159,7 @@ class fGAN:
         self.v_optimizer.step()
            
         return v_loss.item(), g_loss.item(), accuracy
+
+
+
+
