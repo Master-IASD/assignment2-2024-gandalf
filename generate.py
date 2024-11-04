@@ -15,9 +15,9 @@ if __name__ == '__main__':
     print('Model Loading...')
     # Model Pipeline
     mnist_dim = 784
-    model = Generator(g_output_dim = mnist_dim).cuda()
+    model = Generator(g_output_dim = mnist_dim) #.cuda()
     model = load_model(model,name='G.pth',folder= 'checkpoints')
-    model = torch.nn.DataParallel(model).cuda()
+    model = torch.nn.DataParallel(model) #.cuda()
     model.eval()
     print('Model loaded.')
     print('Start Generating')
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     n_samples = 0
     with torch.no_grad():
         while n_samples<10000:
-            z = torch.randn(args.batch_size, 100).cuda()
+            z = torch.randn(args.batch_size, 100) #.cuda()
             x = model(z)
             x = x.reshape(args.batch_size, 28, 28)
             for k in range(x.shape[0]):
