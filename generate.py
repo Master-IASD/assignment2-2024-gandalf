@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Model Pipeline
     mnist_dim = 784
     model = Generator(g_output_dim = mnist_dim)#.cuda()
-    model = load_model(model,name='GKL.pth',folder= 'checkpoints')
+    model = load_model(model,name='G.pth',folder= 'checkpoints')
     model = torch.nn.DataParallel(model)#.cuda()
     model.eval()
     print('Model loaded.')

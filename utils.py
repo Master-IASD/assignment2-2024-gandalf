@@ -56,6 +56,6 @@ def save_models(G, D, folder):
 
 
 def load_model(G, folder, name = 'G.pth'):
-    ckpt = torch.load(os.path.join(folder,name))
+    ckpt = torch.load(os.path.join(folder,name),weights_only=True,map_location='cpu')
     G.load_state_dict({k.replace('module.', ''): v for k, v in ckpt.items()})
     return G

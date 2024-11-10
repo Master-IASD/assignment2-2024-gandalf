@@ -26,7 +26,9 @@ if __name__ == '__main__':
                         help="Size of mini-batches for ADAM")
     parser.add_argument("--wd", type=float, default=1e-4, 
                         help="Value for weight decay of the discriminator")                
-
+    parser.add_argument("--pretrained", type=bool, default=False, 
+                        help="Use pretrained JS model") 
+    
     args = parser.parse_args()
 
 
@@ -53,27 +55,42 @@ if __name__ == '__main__':
 
     print('Model Loading...')
     mnist_dim = 784
-    G = Generator(g_output_dim = mnist_dim)#.cuda()
-    G = load_model(G, folder = 'checkpoints',name='GJS.pth')
-    G = torch.nn.DataParallel(G)#.cuda()
+    G = Generator(g_output_dim = mnist_dim)#.cuda()    
     D = Discriminator(d_input_dim = mnist_dim)#.cuda()
-    D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
+
+    if args.pretrained :
+        D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
+        G = load_model(G, folder = 'checkpoints',name='GJS.pth')
+
+    G = torch.nn.DataParallel(G)#.cuda()
     D = torch.nn.DataParallel(D)#.cuda()
 
     # model = DataParallel(model).cuda()
     print('Model loaded.')
 
+    lr_G = args.lr
+    lr_D = args.lr
+
     # Define optimizers
-    G_optimizer = optim.Adam(G.parameters(), lr = args.lr, betas = (0.5,0.999))
-    D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=args.wd)
-    print(f'Weight decay = {args.wd}')
+    G_optimizer = optim.Adam(G.parameters(), lr = lr_G, betas = (0.5,0.999))
+    D_optimizer = optim.Adam(D.parameters(), lr = lr_D,betas = (0.5,0.999),weight_decay=args.wd)
 
 
     model = fGAN(generator = G,
                  discriminator = D,
                  g_optimizer = G_optimizer,
                  d_optimizer = D_optimizer,
-                 divergence = Kullback_Leibler)
+                 divergence = Squared_Hellinger)
+    
+    print('----------------------------------------------')
+    print('         Model trained overview ')
+    print('----------------------------------------------')
+    print(f'Weight decay = {args.wd}')
+    print(f'Initial Generator learning rate = {G_optimizer.param_groups[0]['lr']}')
+    print(f'Initial discriminator learning rate = {D_optimizer.param_groups[0]['lr']}')
+    print(f'f-divergence used : {model.div.name}')
+    print(f'Use pretrained JS model : {args.pretrained}')
+    print('----------------------------------------------')
     
     print('Start Training :')
     
@@ -95,8 +112,8 @@ if __name__ == '__main__':
             current_dloss = np.mean(dloss)
             current_gloss = np.mean(gloss)
             current_acc = np.mean(acc)
-            
-            if epoch % 2 == 0:
+
+            if epoch % 5 == 0:
                 save_models(model.generator, model.discriminator, 'checkpoints')
 
             print(f'Discriminator loss : {'{:.1e}'.format(current_dloss)}')

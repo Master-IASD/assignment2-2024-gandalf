@@ -51,4 +51,10 @@ class Pearson_chi2(f_divergence):
                         fdiv = lambda t : t,
                         fenchel_conjugate = lambda t : 0.25 * t**2 + t,
                         threshold = 0)
-    
+        
+class Squared_Hellinger(f_divergence):
+    def __init__(self):
+        super().__init__(name = 'Squared Hellinger',
+                        fdiv = lambda t : 1-torch.exp(t),
+                        fenchel_conjugate = lambda t : t / (1-t),
+                        threshold = 0)  

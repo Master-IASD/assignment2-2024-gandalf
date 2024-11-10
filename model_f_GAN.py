@@ -135,15 +135,15 @@ class fGAN:
         self.g_optimizer.zero_grad()
         g_loss = self.generator_loss(batch_size)
         g_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.generator.parameters(), 0.1) # Gradient clipping to prevent exploding or vanishing gradients
+        torch.nn.utils.clip_grad_norm_(self.generator.parameters(), 1) # Gradient clipping to prevent exploding or vanishing gradients
         self.g_optimizer.step()
          
         # Discriminator training 
         self.v_optimizer.zero_grad()
         v_loss, real_output, fake_output = self.discriminator_loss(real_data, batch_size)
         accuracy = self.compute_accuracy(real_output,fake_output) # Compute accuracy
-        (-v_loss).backward() # gradient ascent
-        torch.nn.utils.clip_grad_norm_(self.discriminator.parameters(), 0.1)  # Gradient clipping to prevent exploding or vanishing gradients
+        (-v_loss).backward() # Gradient ascent
+        torch.nn.utils.clip_grad_norm_(self.discriminator.parameters(), 1)  # Gradient clipping to prevent exploding or vanishing gradients
         self.v_optimizer.step()
            
         return v_loss.item(), g_loss.item(), accuracy
