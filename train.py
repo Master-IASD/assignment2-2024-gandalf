@@ -14,6 +14,8 @@ from model_f_GAN import fGAN
 from f_divergences import *
 from utils import load_model
 
+from model_wgan_gp import WGAN_GP
+
 import csv
 
 if __name__ == '__main__':
@@ -61,16 +63,28 @@ if __name__ == '__main__':
     # model = DataParallel(model).cuda()
     print('Model loaded.')
 
-    # Define optimizers
+    """
     G_optimizer = optim.Adam(G.parameters(), lr = args.lr, betas = (0.5,0.999))
     D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=1e-3)
+    """
 
+    g_optimizer = optim.RMSprop(G.parameters(), lr=5e-5)  
+    c_optimizer = optim.RMSprop(D.parameters(), lr=25e-5)  
 
+    """
     model = fGAN(generator = G,
                  discriminator = D,
                  g_optimizer = G_optimizer,
                  d_optimizer = D_optimizer,
                  divergence = reverse_KL)
+    """
+    
+    model = WGAN_GP(generator = G,
+                 critic = D,
+                 g_optimizer = g_optimizer,
+                 c_optimizer = c_optimizer,
+                 threshold=0.0)
+    
     
     # print('Start Training :')
     
