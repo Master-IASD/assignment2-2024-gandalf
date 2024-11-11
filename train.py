@@ -53,10 +53,10 @@ if __name__ == '__main__':
     print('Model Loading...')
     mnist_dim = 784
     G = Generator(g_output_dim = mnist_dim) #.cuda()
-    G = load_model(G, folder = 'checkpoints',name='GWGAN.pth')
+    #G = load_model(G, folder = 'checkpoints',name='G.pth')
     G = torch.nn.DataParallel(G) #.cuda()
     D = Discriminator(d_input_dim = mnist_dim) #.cuda()
-    D = load_model(D,folder = 'checkpoints',name = 'CWGAN.pth')
+    #D = load_model(D,folder = 'checkpoints',name = 'D.pth')
     D = torch.nn.DataParallel(D) #.cuda()
 
     # model = DataParallel(model).cuda()
