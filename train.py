@@ -20,7 +20,7 @@ import csv
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Normalizing Flow.')
-    parser.add_argument("--epochs", type=int, default=150,
+    parser.add_argument("--epochs", type=int, default=100,
                         help="Number of epochs for training.")
     parser.add_argument("--lr", type=float, default=0.0002,
                       help="The learning rate to use for training.")
@@ -50,14 +50,13 @@ if __name__ == '__main__':
                                               batch_size=args.batch_size, shuffle=False)
     print('Dataset Loaded.')
 
-
     print('Model Loading...')
     mnist_dim = 784
     G = Generator(g_output_dim = mnist_dim) #.cuda()
-    G = load_model(G, folder = 'checkpoints',name='GJS.pth')
+    G = load_model(G, folder = 'checkpoints',name='GWGAN.pth')
     G = torch.nn.DataParallel(G) #.cuda()
     D = Discriminator(d_input_dim = mnist_dim) #.cuda()
-    D = load_model(D,folder = 'checkpoints',name = 'DJS.pth')
+    D = load_model(D,folder = 'checkpoints',name = 'CWGAN.pth')
     D = torch.nn.DataParallel(D) #.cuda()
 
     # model = DataParallel(model).cuda()
@@ -68,7 +67,7 @@ if __name__ == '__main__':
     D_optimizer = optim.Adam(D.parameters(), lr = args.lr, betas = (0.5,0.999),weight_decay=1e-3)
     """
 
-    g_optimizer = optim.RMSprop(G.parameters(), lr=5e-5)  
+    g_optimizer = optim.Adam(G.parameters(), lr=5e-5, betas=(0.5, 0.999))  
     c_optimizer = optim.RMSprop(D.parameters(), lr=25e-5)  
 
     """
