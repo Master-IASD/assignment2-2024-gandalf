@@ -9,3 +9,6 @@ __pycache__
 #loss values
 losses.csv
 select_images.py
+
+# Virtual environment
+/venv
