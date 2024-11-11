@@ -3,12 +3,13 @@ import torch.autograd as autograd
 
 class WGAN_GP:
 
-    def __init__(self, generator, critic, g_optimizer, c_optimizer, threshold=0.0):
-        self.generator = generator
-        self.critic = critic
+    def __init__(self, generator, critic, g_optimizer, c_optimizer, threshold=0.0, device='cpu'):
+        self.generator = generator.to(device)
+        self.critic = critic.to(device)
         self.g_optimizer = g_optimizer
         self.c_optimizer = c_optimizer
         self.threshold = threshold  # Set threshold to classify real vs fake image
+        self.device = device
 
     # Generator loss function
     def generator_loss(self, fake_data_score):
@@ -23,11 +24,11 @@ class WGAN_GP:
 
         batch_size = real_data.size(0)
 
-        # Set epsilons randomly between 0 and 1
-        epsilon = torch.rand(batch_size, 1)
+        # Set epsilons randomly between 0 and 1, move to device
+        epsilon = torch.rand(batch_size, 1, device=self.device)
         epsilon = epsilon.expand_as(real_data)
 
-        # Define interpolated samples
+        # Define interpolated samples and move to device
         interpolated = epsilon * real_data + (1 - epsilon) * fake_data
         interpolated.requires_grad_(True)
 
@@ -38,7 +39,7 @@ class WGAN_GP:
         gradients = autograd.grad(
             outputs=interpolated_scores,
             inputs=interpolated,
-            grad_outputs=torch.ones_like(interpolated_scores),
+            grad_outputs=torch.ones_like(interpolated_scores, device=self.device),
             create_graph=True,
             retain_graph=True,
         )[0]
@@ -65,13 +66,14 @@ class WGAN_GP:
         n_critic = 5
         lambda_gp = 10
 
+        real_data = real_data.to(self.device)
         batch_size = real_data.size(0)  # Get size of current batch
 
         # Train critic n_critic times
         for _ in range(n_critic):
-            noise = torch.randn(batch_size, 100)  # Create random noise
+            noise = torch.randn(batch_size, 100, device=self.device)  # Create random noise on device
             fake_data = self.generator(noise).detach()  # Output fake data from generator
-            accuracy = self.compute_accuracy(real_data,fake_data) # Compute accuracy
+            accuracy = self.compute_accuracy(self.critic(real_data), self.critic(fake_data)) # Compute accuracy
             self.c_optimizer.zero_grad()  # Clear previous gradients for critic
             loss_c = self.critic_loss(self.critic(real_data), self.critic(fake_data))  # Calculate critic loss
             gp = self.gradient_penalty(real_data, fake_data, lambda_gp) # Gradient penalty
@@ -80,7 +82,7 @@ class WGAN_GP:
             self.c_optimizer.step()  # Update critic weights
 
         # Train generator
-        noise = torch.randn(batch_size, 100)  # Create random noise
+        noise = torch.randn(batch_size, 100, device=self.device)  # Create random noise on device
         fake_data = self.generator(noise)  # Output fake data from generator
         self.g_optimizer.zero_grad()  # Clear previous gradients for generator
         loss_g = self.generator_loss(self.critic(fake_data))  # Calculate generator loss
