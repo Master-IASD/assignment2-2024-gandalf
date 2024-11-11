@@ -36,6 +36,7 @@ model = WGAN_GP(generator=G, critic=D, g_optimizer=g_optimizer, c_optimizer=d_op
 # Training parameters
 n_epoch = 150  # Change as needed
 
+<<<<<<< HEAD
 # Training loop
 with open('losses.csv', mode='w') as file:
     writer = csv.writer(file, delimiter=',', lineterminator='\n')
@@ -43,6 +44,16 @@ with open('losses.csv', mode='w') as file:
         dloss = []
         gloss = []
         acc = []
+=======
+    print('Model Loading...')
+    mnist_dim = 784
+    G = Generator(g_output_dim = mnist_dim) #.cuda()
+    #G = load_model(G, folder = 'checkpoints',name='G.pth')
+    G = torch.nn.DataParallel(G) #.cuda()
+    D = Discriminator(d_input_dim = mnist_dim) #.cuda()
+    #D = load_model(D,folder = 'checkpoints',name = 'D.pth')
+    D = torch.nn.DataParallel(D) #.cuda()
+>>>>>>> 3d360d24aeb39d48e5078f27088a8557fecc15d2
 
         for batch_idx, (x, _) in enumerate(train_loader):
             x = x.view(-1, mnist_dim).to(device)  # Move data to device
