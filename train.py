@@ -36,6 +36,7 @@ model = WGAN_GP(generator=G, critic=D, g_optimizer=g_optimizer, c_optimizer=d_op
 # Training parameters
 n_epoch = 150  # Change as needed
 
+
 # Training loop
 with open('losses.csv', mode='w') as file:
     writer = csv.writer(file, delimiter=',', lineterminator='\n')
