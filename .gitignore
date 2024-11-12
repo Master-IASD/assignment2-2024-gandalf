@@ -18,3 +18,5 @@ checkpoints/GKL*
 checkpoints/GrKL*
 checkpoints/DSH*
 checkpoints/GSH*
+
+WGAN.ipynb
