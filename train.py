@@ -80,7 +80,7 @@ if __name__ == '__main__':
                  discriminator = D,
                  g_optimizer = G_optimizer,
                  d_optimizer = D_optimizer,
-                 divergence = Squared_Hellinger)
+                 divergence = Pearson_chi2)
     
     print('----------------------------------------------')
     print('         Model trained overview ')
@@ -101,7 +101,21 @@ if __name__ == '__main__':
         for epoch in trange(1, n_epoch+1, leave=True):
             dloss = [] # loss values for the discriminator per batch
             gloss = [] # loss values for the generator per batch
-            acc = []      
+            acc = []
+
+            # Warm up when changing f-divergence
+            if epoch <= 5 :
+                G_optimizer.param_groups[0]['lr'] = lr_G / 100
+                D_optimizer.param_groups[0]['lr'] = lr_D / 100
+
+            elif (epoch > 5) and (epoch <= 10):
+                G_optimizer.param_groups[0]['lr'] = lr_G / 10
+                D_optimizer.param_groups[0]['lr'] = lr_D / 10
+            
+            elif epoch > 10 :
+                G_optimizer.param_groups[0]['lr'] = lr_G
+                D_optimizer.param_groups[0]['lr'] = lr_D
+
             for batch_idx, (x, _) in enumerate(train_loader):
                 x = x.view(-1, mnist_dim)
                 dloss_tmp,gloss_tmp,acc_tmp = model.train_step(real_data=x,batch_size=x.shape[0])
