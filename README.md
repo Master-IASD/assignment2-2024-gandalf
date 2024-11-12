@@ -16,3 +16,5 @@ When your code will be test, we will execute:
 ## Checkpoints
 Push the minimal amount of models in the folder *checkpoints*.
 
+## f-GAN
+The up-to-date f-GAN model code is within the branch "theo". Other versions from other branch may be deprecated (Even if the branch is named after one member of the team, everyone in the group contributed to the model)
