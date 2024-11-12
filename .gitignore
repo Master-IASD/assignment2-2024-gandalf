@@ -10,10 +10,10 @@ __pycache__
 losses.csv
 select_images.py
 
-checkpoints/DJS*
+#checkpoints/DJS*
 checkpoints/DKL*
 checkpoints/DrKL*
-checkpoints/GJS*
+#checkpoints/GJS*
 checkpoints/GKL*
 checkpoints/GrKL*
 checkpoints/DSH*
