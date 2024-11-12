@@ -9,3 +9,12 @@ __pycache__
 #loss values
 losses.csv
 select_images.py
+
+checkpoints/DJS*
+checkpoints/DKL*
+checkpoints/DrKL*
+checkpoints/GJS*
+checkpoints/GKL*
+checkpoints/GrKL*
+checkpoints/DSH*
+checkpoints/GSH*
