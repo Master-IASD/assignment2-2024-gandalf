@@ -25,7 +25,7 @@ def clip_weights(model, clip_value):
 # WGAN model training
 def train_wgan(critic, generator, real_data_loader, num_epochs, n_critic = 5, lr = 0.00005, clip_value = 0.01, batch_print_frequency = 100):
 
-    # Initialize optimizers
+    # Define optimizers
     optimizer_c = optim.RMSprop(critic.parameters(), lr = lr)  # Critic optimizer
     optimizer_g = optim.RMSprop(generator.parameters(), lr = lr)  # Generator optimizer
 
@@ -33,13 +33,13 @@ def train_wgan(critic, generator, real_data_loader, num_epochs, n_critic = 5, lr
     critic.to(device)
     generator.to(device)
 
-    # Loop over number of epochs
+    # Model training
     for epoch in range(num_epochs):
-        for batch_idx, (real_data, _) in enumerate(real_data_loader): # Unpack data and labels
+        for batch_idx, (real_data, _) in enumerate(real_data_loader): 
             real_data = real_data.to(device)  # Move real data to device
             batch_size = real_data.size(0)  # Get size of current batch
 
-            # Reshape real_data to have the correct dimensions for the critic
+            # Reshape real_data to have correct dimensions for critic
             real_data = real_data.view(batch_size, -1)  # Flatten the input
 
             # Train critic n_critic times
@@ -67,11 +67,6 @@ def train_wgan(critic, generator, real_data_loader, num_epochs, n_critic = 5, lr
             loss_g.backward()  # Backpropagate loss
             optimizer_g.step()  # Update generator weights
 
-        # Print loss every few batches
-            if batch_idx % batch_print_frequency == 0:
-                print(f"Epoch [{epoch+1} / {num_epochs}], Batch [{batch_idx} / {len(real_data_loader)}], "
-                      f"Critic Loss: {loss_c.item():.4f}, Generator Loss: {loss_g.item():.4f}")
+        # Save to checkpoints
         if epoch % 10 == 0:
             save_models(generator, critic, 'checkpoints')
-                
-        
